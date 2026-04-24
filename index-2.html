@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Zafe — Tu bebida, protegida.</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;0,700;1,400&family=Outfit:wght@200;300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --navy:       #0e1628;
+      --navy-mid:   #16243e;
+      --navy-card:  #1b2a4a;
+      --navy-light: #243352;
+      --white:      #ffffff;
+      --grey:       #a0afbd;
+      --grey-light: #d2dae6;
+      --grey-dim:   #5a6a80;
+      --accent:     #c8d8f0;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      background: var(--navy);
+      color: var(--white);
+      overflow-x: hidden;
+      cursor: none;
+    }
+
+    /* ── Custom cursor ── */
+    .cursor {
+      position: fixed;
+      width: 10px; height: 10px;
+      background: var(--white);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 9999;
+      transform: translate(-50%,-50%);
+      transition: transform .1s, width .2s, height .2s, background .2s;
+      mix-blend-mode: difference;
+    }
+    .cursor-ring {
+      position: fixed;
+      width: 36px; height: 36px;
+      border: 1px solid rgba(255,255,255,.4);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 9998;
+      transform: translate(-50%,-50%);
+      transition: transform .25s ease, width .3s, height .3s, border-color .3s;
+    }
+
+    /* ── Canvas bg ── */
+    #bg-canvas {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* ── Nav ── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 28px 60px;
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(160,175,195,.08);
+      background: rgba(14,22,40,.5);
+      transition: padding .3s;
+    }
+    nav.scrolled { padding: 18px 60px; }
+
+    .nav-logo {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 600;
+      font-size: 1.5rem;
+      letter-spacing: .18em;
+      color: var(--white);
+      text-decoration: none;
+    }
+    .nav-links {
+      display: flex;
+      gap: 40px;
+      list-style: none;
+    }
+    .nav-links a {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 300;
+      font-size: .85rem;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--grey);
+      text-decoration: none;
+      transition: color .2s;
+    }
+    .nav-links a:hover { color: var(--white); }
+
+    /* ── Sections base ── */
+    section {
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ── HERO ── */
+    #hero {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 120px 40px 80px;
+    }
+
+    .hero-eyebrow {
+      font-weight: 300;
+      font-size: .8rem;
+      letter-spacing: .3em;
+      text-transform: uppercase;
+      color: var(--grey);
+      margin-bottom: 32px;
+      opacity: 0;
+      animation: fadeUp .8s .3s forwards;
+    }
+
+    .hero-title {
+      font-family: 'Lora', serif;
+      font-size: clamp(3rem, 8vw, 6.5rem);
+      font-weight: 700;
+      line-height: 1.05;
+      letter-spacing: -.02em;
+      max-width: 800px;
+      opacity: 0;
+      animation: fadeUp .9s .5s forwards;
+    }
+    .hero-title em {
+      font-style: italic;
+      color: var(--accent);
+    }
+
+    .hero-sub {
+      margin-top: 28px;
+      font-weight: 300;
+      font-size: clamp(1rem, 2vw, 1.2rem);
+      color: var(--grey);
+      max-width: 540px;
+      line-height: 1.7;
+      opacity: 0;
+      animation: fadeUp .9s .7s forwards;
+    }
+
+    .hero-cta {
+      margin-top: 52px;
+      display: flex;
+      gap: 20px;
+      opacity: 0;
+      animation: fadeUp .9s .9s forwards;
+    }
+
+    .btn-primary {
+      padding: 16px 40px;
+      background: var(--white);
+      color: var(--navy);
+      border: none;
+      border-radius: 2px;
+      font-family: 'Outfit', sans-serif;
+      font-weight: 600;
+      font-size: .85rem;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      text-decoration: none;
+      cursor: none;
+      transition: background .2s, transform .2s;
+    }
+    .btn-primary:hover { background: var(--accent); transform: translateY(-2px); }
+
+    .btn-ghost {
+      padding: 16px 40px;
+      background: transparent;
+      color: var(--grey);
+      border: 1px solid rgba(160,175,195,.3);
+      border-radius: 2px;
+      font-family: 'Outfit', sans-serif;
+      font-weight: 300;
+      font-size: .85rem;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      text-decoration: none;
+      cursor: none;
+      transition: border-color .2s, color .2s, transform .2s;
+    }
+    .btn-ghost:hover { border-color: var(--white); color: var(--white); transform: translateY(-2px); }
+
+    .hero-scroll {
+      position: absolute;
+      bottom: 40px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      opacity: 0;
+      animation: fadeUp .8s 1.2s forwards;
+    }
+    .hero-scroll span {
+      font-size: .7rem;
+      letter-spacing: .2em;
+      text-transform: uppercase;
+      color: var(--grey-dim);
+    }
+    .scroll-line {
+      width: 1px;
+      height: 50px;
+      background: linear-gradient(to bottom, var(--grey-dim), transparent);
+      animation: scrollPulse 2s 1.5s infinite;
+    }
+
+    /* ── DIVIDER ── */
+    .divider {
+      width: 100%;
+      max-width: 1100px;
+      margin: 0 auto;
+      height: 1px;
+      background: linear-gradient(to right, transparent, rgba(160,175,195,.2), transparent);
+    }
+
+    /* ── QUÉ ES ── */
+    #que-es {
+      padding: 120px 60px;
+      max-width: 1200px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 100px;
+      align-items: center;
+    }
+
+    .section-tag {
+      font-size: .72rem;
+      font-weight: 500;
+      letter-spacing: .3em;
+      text-transform: uppercase;
+      color: var(--grey-dim);
+      margin-bottom: 20px;
+    }
+
+    .section-title {
+      font-family: 'Lora', serif;
+      font-size: clamp(2rem, 4vw, 3rem);
+      font-weight: 600;
+      line-height: 1.2;
+      margin-bottom: 28px;
+    }
+    .section-title em {
+      font-style: italic;
+      color: var(--accent);
+    }
+
+    .section-body {
+      font-weight: 300;
+      font-size: 1.05rem;
+      color: var(--grey-light);
+      line-height: 1.85;
+    }
+    .section-body p + p { margin-top: 20px; }
+
+    .stat-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2px;
+      background: rgba(160,175,195,.1);
+    }
+    .stat-card {
+      background: var(--navy-card);
+      padding: 40px 36px;
+      position: relative;
+      overflow: hidden;
+    }
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(to right, var(--navy-light), var(--accent), var(--navy-light));
+      opacity: 0;
+      transition: opacity .3s;
+    }
+    .stat-card:hover::before { opacity: 1; }
+    .stat-num {
+      font-family: 'Lora', serif;
+      font-size: 2.8rem;
+      font-weight: 700;
+      color: var(--white);
+      line-height: 1;
+      margin-bottom: 10px;
+    }
+    .stat-label {
+      font-size: .82rem;
+      font-weight: 300;
+      color: var(--grey);
+      line-height: 1.5;
+    }
+
+    /* ── CÓMO FUNCIONA ── */
+    #como-funciona {
+      padding: 120px 60px;
+      background: var(--navy-mid);
+    }
+
+    #como-funciona .inner {
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    #como-funciona .header {
+      text-align: center;
+      margin-bottom: 80px;
+    }
+
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2px;
+      background: rgba(160,175,195,.08);
+    }
+
+    .step {
+      background: var(--navy-card);
+      padding: 56px 44px;
+      position: relative;
+      transition: background .3s;
+    }
+    .step:hover { background: var(--navy-light); }
+
+    .step-num {
+      font-family: 'Lora', serif;
+      font-size: 5rem;
+      font-weight: 700;
+      color: rgba(160,175,195,.1);
+      line-height: 1;
+      margin-bottom: 28px;
+      transition: color .3s;
+    }
+    .step:hover .step-num { color: rgba(200,216,240,.15); }
+
+    .step-title {
+      font-family: 'Lora', serif;
+      font-size: 1.3rem;
+      font-weight: 600;
+      margin-bottom: 16px;
+      color: var(--white);
+    }
+
+    .step-body {
+      font-weight: 300;
+      font-size: .95rem;
+      color: var(--grey);
+      line-height: 1.75;
+    }
+
+    .step-icon {
+      width: 44px;
+      height: 44px;
+      border: 1px solid rgba(160,175,195,.25);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 32px;
+      transition: border-color .3s;
+    }
+    .step:hover .step-icon { border-color: var(--accent); }
+    .step-icon svg { width: 20px; height: 20px; stroke: var(--grey); }
+    .step:hover .step-icon svg { stroke: var(--accent); }
+
+    /* ── VALORES ── */
+    #valores {
+      padding: 120px 60px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    #valores .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-bottom: 72px;
+    }
+
+    .valores-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 2px;
+      background: rgba(160,175,195,.08);
+    }
+
+    .valor-card {
+      background: var(--navy-card);
+      padding: 44px 32px;
+      text-align: center;
+      transition: background .3s;
+      position: relative;
+      overflow: hidden;
+    }
+    .valor-card::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 2px;
+      background: var(--accent);
+      transform: scaleX(0);
+      transition: transform .3s;
+    }
+    .valor-card:hover { background: var(--navy-light); }
+    .valor-card:hover::after { transform: scaleX(1); }
+
+    .valor-icon {
+      font-size: 1.8rem;
+      margin-bottom: 20px;
+      display: block;
+    }
+    .valor-name {
+      font-family: 'Lora', serif;
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--white);
+      margin-bottom: 10px;
+    }
+    .valor-desc {
+      font-size: .8rem;
+      font-weight: 300;
+      color: var(--grey);
+      line-height: 1.6;
+    }
+
+    /* ── MISIÓN/VISIÓN ── */
+    #mision {
+      padding: 120px 60px;
+      background: var(--navy-mid);
+    }
+    #mision .inner {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2px;
+      background: rgba(160,175,195,.08);
+    }
+
+    .mv-card {
+      background: var(--navy-card);
+      padding: 72px 60px;
+      position: relative;
+      overflow: hidden;
+    }
+    .mv-card::before {
+      content: attr(data-label);
+      position: absolute;
+      top: -20px; right: 40px;
+      font-family: 'Lora', serif;
+      font-size: 8rem;
+      font-weight: 700;
+      color: rgba(255,255,255,.02);
+      line-height: 1;
+      pointer-events: none;
+    }
+    .mv-tag {
+      font-size: .72rem;
+      font-weight: 500;
+      letter-spacing: .3em;
+      text-transform: uppercase;
+      color: var(--grey-dim);
+      margin-bottom: 20px;
+    }
+    .mv-title {
+      font-family: 'Lora', serif;
+      font-size: 2rem;
+      font-weight: 600;
+      margin-bottom: 28px;
+    }
+    .mv-body {
+      font-weight: 300;
+      font-size: 1rem;
+      color: var(--grey-light);
+      line-height: 1.85;
+    }
+
+    /* ── CONTACTO ── */
+    #contacto {
+      padding: 120px 60px;
+      max-width: 800px;
+      margin: 0 auto;
+      text-align: center;
+    }
+
+    #contacto .section-title { margin-bottom: 20px; }
+    #contacto .section-body { margin-bottom: 52px; }
+
+    .contact-form {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      text-align: left;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .form-field {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .form-field label {
+      font-size: .75rem;
+      font-weight: 500;
+      letter-spacing: .15em;
+      text-transform: uppercase;
+      color: var(--grey-dim);
+    }
+
+    .form-field input,
+    .form-field textarea {
+      background: var(--navy-card);
+      border: 1px solid rgba(160,175,195,.15);
+      border-radius: 2px;
+      padding: 16px 20px;
+      font-family: 'Outfit', sans-serif;
+      font-weight: 300;
+      font-size: 1rem;
+      color: var(--white);
+      outline: none;
+      transition: border-color .2s;
+      resize: none;
+    }
+    .form-field input:focus,
+    .form-field textarea:focus {
+      border-color: rgba(200,216,240,.4);
+    }
+    .form-field input::placeholder,
+    .form-field textarea::placeholder { color: var(--grey-dim); }
+
+    .form-submit {
+      margin-top: 8px;
+      padding: 18px 48px;
+      background: var(--white);
+      color: var(--navy);
+      border: none;
+      border-radius: 2px;
+      font-family: 'Outfit', sans-serif;
+      font-weight: 600;
+      font-size: .85rem;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      cursor: none;
+      transition: background .2s, transform .2s;
+      align-self: flex-start;
+    }
+    .form-submit:hover { background: var(--accent); transform: translateY(-2px); }
+
+    /* ── FOOTER ── */
+    footer {
+      position: relative;
+      z-index: 1;
+      border-top: 1px solid rgba(160,175,195,.1);
+      padding: 48px 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .footer-logo {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 600;
+      font-size: 1.1rem;
+      letter-spacing: .2em;
+      color: var(--white);
+    }
+    .footer-copy {
+      font-size: .78rem;
+      font-weight: 300;
+      color: var(--grey-dim);
+      letter-spacing: .05em;
+    }
+    .footer-links {
+      display: flex;
+      gap: 28px;
+    }
+    .footer-links a {
+      font-size: .78rem;
+      font-weight: 300;
+      color: var(--grey-dim);
+      text-decoration: none;
+      letter-spacing: .05em;
+      transition: color .2s;
+    }
+    .footer-links a:hover { color: var(--white); }
+
+    /* ── Animations ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes scrollPulse {
+      0%,100% { opacity: .3; transform: scaleY(1); }
+      50%      { opacity: 1; transform: scaleY(1.1); }
+    }
+
+    .reveal {
+      opacity: 0;
+      transform: translateY(32px);
+      transition: opacity .8s ease, transform .8s ease;
+    }
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 900px) {
+      nav { padding: 22px 28px; }
+      .nav-links { display: none; }
+      #que-es { grid-template-columns: 1fr; gap: 60px; padding: 80px 28px; }
+      .steps { grid-template-columns: 1fr; }
+      .valores-grid { grid-template-columns: repeat(3, 1fr); }
+      #mision .inner { grid-template-columns: 1fr; }
+      footer { flex-direction: column; gap: 20px; text-align: center; }
+      .hero-cta { flex-direction: column; align-items: center; }
+      #como-funciona, #valores, #mision, #contacto { padding: 80px 28px; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="cursor" id="cursor"></div>
+  <div class="cursor-ring" id="cursor-ring"></div>
+  <canvas id="bg-canvas"></canvas>
+
+  <!-- NAV -->
+  <nav id="navbar">
+    <a href="#" class="nav-logo">ZAFE</a>
+    <ul class="nav-links">
+      <li><a href="#que-es">El producto</a></li>
+      <li><a href="#como-funciona">Cómo funciona</a></li>
+      <li><a href="#valores">Valores</a></li>
+      <li><a href="#mision">Misión</a></li>
+      <li><a href="#contacto">Contacto</a></li>
+    </ul>
+  </nav>
+
+  <!-- HERO -->
+  <section id="hero">
+    <p class="hero-eyebrow">Empresa Mexicana &nbsp;·&nbsp; Seguridad en tu bebida</p>
+    <h1 class="hero-title">Tu bebida,<br><em>protegida.</em></h1>
+    <p class="hero-sub">Zafe es un popote detector que identifica sustancias en tu bebida antes de que lleguen a ti.</p>
+    <div class="hero-cta">
+      <a href="#que-es" class="btn-primary">Conoce Zafe</a>
+      <a href="#contacto" class="btn-ghost">Contáctanos</a>
+    </div>
+    <div class="hero-scroll">
+      <span>Scroll</span>
+      <div class="scroll-line"></div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- QUÉ ES -->
+  <section id="que-es">
+    <div class="reveal">
+      <p class="section-tag">Nuestra empresa</p>
+      <h2 class="section-title">¿Qué es <em>Zafe?</em></h2>
+      <div class="section-body">
+        <p>Zafe es una empresa mexicana comprometida con tu seguridad y bienestar. Nacemos de la necesidad de brindar herramientas concretas ante una realidad que no podemos ignorar.</p>
+        <p>Nuestro producto es un popote flexible con estampas reactivas especiales que detectan la presencia de GHB al insertarlo en tu bebida, permitiéndote saber si tu trago ha sido adulterado antes de consumirlo.</p>
+        <p>Porque disfrutar una noche no debería costarte tu seguridad.</p>
+      </div>
+    </div>
+
+    <div class="stat-grid reveal">
+      <div class="stat-card">
+        <div class="stat-num">GHB</div>
+        <div class="stat-label">Sustancia detectada con precisión mediante estampas reactivas</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">3</div>
+        <div class="stat-label">Pasos simples para usar el producto y protegerte</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">100%</div>
+        <div class="stat-label">Discreto y compacto, perfecto para llevar a cualquier lugar</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">MX</div>
+        <div class="stat-label">Empresa mexicana con compromiso real hacia su comunidad</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- CÓMO FUNCIONA -->
+  <section id="como-funciona">
+    <div class="inner">
+      <div class="header reveal">
+        <p class="section-tag" style="text-align:center; margin-bottom:16px;">Uso del producto</p>
+        <h2 class="section-title" style="text-align:center;">Así de <em>simple.</em></h2>
+      </div>
+      <div class="steps">
+        <div class="step reveal">
+          <div class="step-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2C8 2 5 5 5 9c0 3 1.5 5.5 4 7v2h6v-2c2.5-1.5 4-4 4-7 0-4-3-7-7-7z"/>
+            </svg>
+          </div>
+          <div class="step-num">01</div>
+          <div class="step-title">Prepárate</div>
+          <div class="step-body">Saca el popote Zafe de su empaque antes de recibir tu bebida. Mantenlo contigo en todo momento durante la noche.</div>
+        </div>
+        <div class="step reveal">
+          <div class="step-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="2" x2="12" y2="22"/>
+              <path d="M8 6h8M8 18h8"/>
+              <path d="M6 10h12M6 14h12"/>
+            </svg>
+          </div>
+          <div class="step-num">02</div>
+          <div class="step-title">Inserta</div>
+          <div class="step-body">Introduce el popote directamente en tu bebida durante al menos 10 segundos. Las estampas comenzarán a reaccionar de inmediato.</div>
+        </div>
+        <div class="step reveal">
+          <div class="step-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/>
+              <path d="M12 8v4l3 3"/>
+            </svg>
+          </div>
+          <div class="step-num">03</div>
+          <div class="step-title">Observa</div>
+          <div class="step-body">Si las estampas cambian de color, tu bebida puede estar adulterada. No la consumas. Si no cambian, puedes beberla con tranquilidad.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- VALORES -->
+  <section id="valores">
+    <div class="header reveal">
+      <div>
+        <p class="section-tag">Lo que nos define</p>
+        <h2 class="section-title">Nuestros <em>valores.</em></h2>
+      </div>
+    </div>
+    <div class="valores-grid">
+      <div class="valor-card reveal">
+        <span class="valor-icon">🛡️</span>
+        <div class="valor-name">Seguridad</div>
+        <div class="valor-desc">Tu protección es nuestra razón de existir.</div>
+      </div>
+      <div class="valor-card reveal">
+        <span class="valor-icon">🤝</span>
+        <div class="valor-name">Confianza</div>
+        <div class="valor-desc">Transparencia y honestidad en todo lo que hacemos.</div>
+      </div>
+      <div class="valor-card reveal">
+        <span class="valor-icon">💙</span>
+        <div class="valor-name">Autocuidado</div>
+        <div class="valor-desc">Creemos en el derecho a cuidarse uno mismo.</div>
+      </div>
+      <div class="valor-card reveal">
+        <span class="valor-icon">☮️</span>
+        <div class="valor-name">Paz</div>
+        <div class="valor-desc">Que cada noche sea una experiencia libre de miedo.</div>
+      </div>
+      <div class="valor-card reveal">
+        <span class="valor-icon">🌱</span>
+        <div class="valor-name">Apoyo</div>
+        <div class="valor-desc">Comunidad, red y respaldo para quienes lo necesitan.</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- MISIÓN Y VISIÓN -->
+  <section id="mision">
+    <div class="inner reveal">
+      <div class="mv-card" data-label="M">
+        <p class="mv-tag">Misión</p>
+        <h3 class="mv-title">Por qué existimos</h3>
+        <p class="mv-body">Promover un entorno seguro, reducir la incertidumbre y brindar una experiencia de bienestar en la que jóvenes y adultos no tengan que preocuparse por estar expuestos e indefensos en situaciones de riesgo.</p>
+      </div>
+      <div class="mv-card" data-label="V">
+        <p class="mv-tag">Visión</p>
+        <h3 class="mv-title">A dónde vamos</h3>
+        <p class="mv-body">Convertirnos en la empresa de referencia en seguridad para bebidas entre los jóvenes de México, ofreciendo un producto que genere tranquilidad real y una sensación genuina de protección para quienes lo usan.</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- CONTACTO -->
+  <section id="contacto">
+    <div class="reveal">
+      <p class="section-tag" style="text-align:center; margin-bottom:16px;">¿Tienes preguntas?</p>
+      <h2 class="section-title">Escríbenos.</h2>
+      <p class="section-body" style="text-align:center;">Estamos aquí para atenderte. Ya sea que tengas preguntas sobre el producto, quieras más información o simplemente quieras saludarnos.</p>
+    </div>
+    <form class="contact-form reveal" onsubmit="handleSubmit(event)">
+      <div class="form-row">
+        <div class="form-field">
+          <label>Nombre</label>
+          <input type="text" placeholder="Tu nombre" required />
+        </div>
+        <div class="form-field">
+          <label>Correo</label>
+          <input type="email" placeholder="tu@correo.com" required />
+        </div>
+      </div>
+      <div class="form-field">
+        <label>Mensaje</label>
+        <textarea rows="5" placeholder="¿En qué podemos ayudarte?" required></textarea>
+      </div>
+      <button type="submit" class="form-submit">Enviar mensaje</button>
+    </form>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-logo">ZAFE</div>
+    <p class="footer-copy">© 2025 Zafe. Empresa Mexicana. Todos los derechos reservados.</p>
+    <div class="footer-links">
+      <a href="https://instagram.com/drinkzafe.mx" target="_blank">Instagram</a>
+      <a href="#">Privacidad</a>
+    </div>
+  </footer>
+
+  <script>
+    // ── Bokeh canvas background ──
+    const canvas = document.getElementById('bg-canvas');
+    const ctx = canvas.getContext('2d');
+    let W, H, circles = [];
+
+    function resize() {
+      W = canvas.width  = window.innerWidth;
+      H = canvas.height = window.innerHeight;
+    }
+
+    function initCircles() {
+      circles = [];
+      const count = 12;
+      for (let i = 0; i < count; i++) {
+        circles.push({
+          x: Math.random() * W,
+          y: Math.random() * H,
+          r: 80 + Math.random() * 260,
+          vx: (Math.random() - .5) * .18,
+          vy: (Math.random() - .5) * .18,
+          alpha: .018 + Math.random() * .025,
+        });
+      }
+    }
+
+    function drawBg() {
+      ctx.clearRect(0, 0, W, H);
+      circles.forEach(c => {
+        const g = ctx.createRadialGradient(c.x, c.y, 0, c.x, c.y, c.r);
+        g.addColorStop(0, `rgba(40,70,130,${c.alpha})`);
+        g.addColorStop(1, 'rgba(14,22,40,0)');
+        ctx.beginPath();
+        ctx.arc(c.x, c.y, c.r, 0, Math.PI * 2);
+        ctx.fillStyle = g;
+        ctx.fill();
+        c.x += c.vx; c.y += c.vy;
+        if (c.x < -c.r) c.x = W + c.r;
+        if (c.x > W + c.r) c.x = -c.r;
+        if (c.y < -c.r) c.y = H + c.r;
+        if (c.y > H + c.r) c.y = -c.r;
+      });
+      requestAnimationFrame(drawBg);
+    }
+
+    resize(); initCircles(); drawBg();
+    window.addEventListener('resize', () => { resize(); initCircles(); });
+
+    // ── Custom cursor ──
+    const cursor = document.getElementById('cursor');
+    const ring   = document.getElementById('cursor-ring');
+    let rx = 0, ry = 0, mx = 0, my = 0;
+
+    document.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; cursor.style.left = mx+'px'; cursor.style.top = my+'px'; });
+
+    (function movRing() {
+      rx += (mx - rx) * .12;
+      ry += (my - ry) * .12;
+      ring.style.left = rx+'px';
+      ring.style.top  = ry+'px';
+      requestAnimationFrame(movRing);
+    })();
+
+    document.querySelectorAll('a, button, input, textarea').forEach(el => {
+      el.addEventListener('mouseenter', () => { cursor.style.width='6px'; cursor.style.height='6px'; ring.style.width='52px'; ring.style.height='52px'; });
+      el.addEventListener('mouseleave', () => { cursor.style.width='10px'; cursor.style.height='10px'; ring.style.width='36px'; ring.style.height='36px'; });
+    });
+
+    // ── Scroll reveal ──
+    const reveals = document.querySelectorAll('.reveal');
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach((e, i) => {
+        if (e.isIntersecting) {
+          setTimeout(() => e.target.classList.add('visible'), i * 80);
+          observer.unobserve(e.target);
+        }
+      });
+    }, { threshold: .12 });
+    reveals.forEach(r => observer.observe(r));
+
+    // ── Navbar scroll ──
+    window.addEventListener('scroll', () => {
+      document.getElementById('navbar').classList.toggle('scrolled', window.scrollY > 60);
+    });
+
+    // ── Form submit ──
+    function handleSubmit(e) {
+      e.preventDefault();
+      const btn = e.target.querySelector('.form-submit');
+      btn.textContent = '¡Mensaje enviado!';
+      btn.style.background = '#a0afbd';
+      setTimeout(() => { btn.textContent = 'Enviar mensaje'; btn.style.background = ''; e.target.reset(); }, 3000);
+    }
+  </script>
+</body>
+</html>
